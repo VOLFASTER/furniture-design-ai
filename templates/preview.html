@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 20px; 
+        }
+        .preview-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px;
+            justify-content: center;
+        }
+        .preview-card {
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            width: 400px;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .preview-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+        .preview-image:hover {
+            transform: scale(1.02);
+        }
+        .preview-info {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .material-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .dimension-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        .alert {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+        }
+        .alert-danger {
+            background-color: #dc3545;
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+        }
+        .btn-back {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+        .dimension-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .dimension-value {
+            color: #007bff;
+        }
+        .material-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        .material-value {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">{{ title }}</h1>
+        
+        <div class="preview-container">
+            {% for preview in previews %}
+            <div class="preview-card">
+                <div style="position: relative;">
+                    <img src="{{ preview.image_url }}" 
+                         alt="{{ preview.angle }}" 
+                         class="preview-image"
+                         onerror="this.onerror=null; handleImageError(this, '{{ preview.angle }}');">
+                    <div class="loading-overlay" id="loading-{{ preview.angle }}">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-info">
+                    <h3 class="text-center mb-3">
+                        <i class="fas fa-cube me-2"></i>
+                        {{ preview.angle | title }} Görünüm
+                    </h3>
+                    
+                    {% if show_dimensions %}
+                    <div class="dimension-info">
+                        <div>
+                            <span class="dimension-label">Uzunluk:</span>
+                            <span class="dimension-value">{{ dimensions.length }}cm</span>
+                        </div>
+                        <div>
+                            <span class="dimension-label">Genişlik:</span>
+                            <span class="dimension-value">{{ dimensions.width }}cm</span>
+                        </div>
+                        <div>
+                            <span class="dimension-label">Yükseklik:</span>
+                            <span class="dimension-value">{{ dimensions.height }}cm</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if show_materials %}
+                    <div class="material-info">
+                        <div class="mb-2">
+                            <div class="material-label">Materyal:</div>
+                            <div class="material-value">
+                                {{ material.material_type }}
+                                {% if material.sub_type %}({{ material.sub_type }}){% endif %}
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="material-label">Renk:</div>
+                            <div class="material-value" style="display: flex; align-items: center;">
+                                {{ material.color }}
+                                <div style="width: 20px; height: 20px; border-radius: 50%; margin-left: 10px; background-color: {{ material.color }}"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="material-label">Yüzey:</div>
+                            <div class="material-value">{{ material.finish or 'Standart' }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <a href="/" class="btn-back" title="Ana Sayfaya Dön">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Yükleme göstergelerini gizle
+        document.querySelectorAll('img.preview-image').forEach(img => {
+            img.addEventListener('load', function() {
+                const loadingId = 'loading-' + this.alt;
+                const loadingElement = document.getElementById(loadingId);
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function handleImageError(img, angle) {
+        console.error(`Görüntü yüklenemedi: ${angle}`);
+        img.src = `/static/images/error.png`;
+        
+        const loadingId = 'loading-' + angle;
+        const loadingElement = document.getElementById(loadingId);
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger';
+        errorDiv.innerHTML = `
+            <i class="fas fa-exclamation-circle me-2"></i>
+            ${angle} görünümü yüklenemedi. Lütfen tekrar deneyin.
+        `;
+        img.parentNode.appendChild(errorDiv);
+    }
+    </script>
+</body>
+</html>
